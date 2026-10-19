@@ -1,0 +1,28 @@
+{
+  "name": "max-applications-bot",
+  "version": "1.0.0",
+  "description": "MAX messenger bot for collecting client applications",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node --import ./scripts/setup-ca.mjs dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "start:local": "tsx src/index.ts",
+    "dev:polling": "cross-env USE_POLLING=true tsx src/index.ts"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@maxhub/max-bot-api": "^0.2.4",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.0.1",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  }
+}
