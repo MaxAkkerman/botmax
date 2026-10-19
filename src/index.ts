@@ -34,6 +34,42 @@ async function bootstrap(): Promise<void> {
   process.once('SIGINT', shutdown);
   process.once('SIGTERM', shutdown);
 
+  const app = express();
+
+  app.get('/health', (_req, res) => {
+    res.status(200).send('ok');
+  });
+
+  if (!config.usePolling) {
+    app.post(
+      '/webhook',
+      express.json({ limit: '1mb' }),
+      async (req, res) => {
+        const secret = req.header('X-Max-Bot-Api-Secret');
+        if (secret !== config.webhookSecret) {
+          res.status(401).send('Unauthorized');
+          return;
+        }
+
+        res.status(200).send('ok');
+
+        try {
+          await processUpdate(bot, req.body);
+        } catch (error) {
+          console.error('[webhook] Update processing error:', error);
+        }
+      },
+    );
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    const server = app.listen(config.port, '0.0.0.0', () => {
+      console.log(`[server] Listening on 0.0.0.0:${config.port}`);
+      resolve();
+    });
+    server.on('error', reject);
+  });
+
   if (config.usePolling) {
     await deleteWebhookSubscriptions(config.botToken);
     console.log('[bot] Running in long polling mode');
@@ -47,42 +83,13 @@ async function bootstrap(): Promise<void> {
     throw new Error('WEBHOOK_URL is required when USE_POLLING is not true');
   }
 
-  const app = express();
-
-  app.get('/health', (_req, res) => {
-    res.status(200).send('ok');
-  });
-
-  app.post(
-    '/webhook',
-    express.json({ limit: '1mb' }),
-    async (req, res) => {
-      const secret = req.header('X-Max-Bot-Api-Secret');
-      if (secret !== config.webhookSecret) {
-        res.status(401).send('Unauthorized');
-        return;
-      }
-
-      res.status(200).send('ok');
-
-      try {
-        await processUpdate(bot, req.body);
-      } catch (error) {
-        console.error('[webhook] Update processing error:', error);
-      }
-    },
+  await deleteWebhookSubscriptions(config.botToken);
+  await registerWebhook(
+    config.botToken,
+    config.webhookUrl,
+    config.webhookSecret,
   );
-
-  app.listen(config.port, '0.0.0.0', async () => {
-    console.log(`[server] Listening on 0.0.0.0:${config.port}`);
-    await deleteWebhookSubscriptions(config.botToken);
-    await registerWebhook(
-      config.botToken,
-      config.webhookUrl,
-      config.webhookSecret,
-    );
-    console.log('[bot] Webhook mode active');
-  });
+  console.log('[bot] Webhook mode active');
 }
 
 bootstrap().catch((error) => {
