@@ -6,7 +6,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "start": "node --import ./scripts/setup-ca.mjs dist/index.js",
+    "start": "node scripts/start.mjs",
     "dev": "tsx watch src/index.ts",
     "start:local": "tsx src/index.ts",
     "dev:polling": "cross-env USE_POLLING=true tsx src/index.ts"

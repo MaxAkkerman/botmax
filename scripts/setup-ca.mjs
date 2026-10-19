@@ -7,6 +7,8 @@ const certPath = path.resolve(
   '../certs/russian-trusted.pem',
 );
 
-if (fs.existsSync(certPath)) {
-  process.env.NODE_EXTRA_CA_CERTS = certPath;
+if (fs.existsSync(certPath) && !process.env.NODE_EXTRA_CA_CERTS) {
+  console.warn(
+    '[ca] NODE_EXTRA_CA_CERTS is not set. Restart via scripts/start.mjs so the Russian CA is trusted.',
+  );
 }
